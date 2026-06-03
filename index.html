@@ -382,6 +382,7 @@ select{width:100%;font-size:14px;padding:8px 10px;border-radius:var(--border-rad
     <button class="tab-btn" onclick="switchTab('record')">記録</button>
   </div>
   <div class="tab-content active" id="tab-summary">
+    <div id="summary-message" style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:1rem;font-size:14px;color:var(--color-text-secondary);line-height:1.75;border-left:3px solid #5DCAA5"></div>
     <div class="summary-top">
       <div class="st-title">昨夜の睡眠データ</div>
       <div class="eff-inline" id="eff-chips"></div>
@@ -472,6 +473,7 @@ var copingItems=[
   {k:'c_write',l:'考えごとを紙に書いて「明日考えること」にした',fb:'考えごとを紙に外に出すと、頭の中の反省会がひと区切りつきやすくなります。「今夜の答えは出さなくていい」と書いて閉じることがコツです。'},
   {k:'c_staff',l:'スタッフに話した・相談した',fb:'眠れない夜にスタッフへ相談できたことは大切な一歩です。一人で抱え込まないことが眠りにもこころにも助けになります。'},
   {k:'c_out',l:'いったん布団から出て落ち着いた',fb:'布団から出てリセットできたことは正しい対処です。今夜も20〜30分眠れない感覚が続いたら同じように試してみましょう。'},
+  {k:'c_planeta',l:'ぷらねたルーム（環境調整室）でリラックスした',fb:'ぷらねたルームを活用できたことは、自分の状態に気づいて対処できたということです。音楽・アロマ・やわらかい光の中で体と気持ちをゆるめる時間は、眠りの準備にもなります。次も眠れないと感じたら、早めに使ってみましょう。'},
   {k:'c_none',l:'何もできず、つらかった',fb:'何もできずつらかった夜があったことをまず認めましょう。それでも記録をつけられたこと自体が観察する力です。今日の結果を参考に、今夜は一つだけ試せそうなことを選んでみましょう。'}
 ];
 var dxChecks={
@@ -553,7 +555,7 @@ function showResult(){
   else{chips.innerHTML='<div style="font-size:13px;color:var(--color-text-tertiary)">就寝・起床時刻を入力すると睡眠効率が表示されます</div>';}
   function addPoint(tag,color,main,hint,detail){points.push({tag:tag,color:color,main:main,hint:hint,detail:detail});}
   var negM=['fatigue','sleepy','mood','irritable','anxiety'];
-  if(negM.filter(function(k){return(mornS[k]||0)>=2;}).length>=2||(mornS['rest']||0)<=1||(mornS['clear']||0)<=1){var rb='寝た時間よりも、回復した感じが少ないのがポイントです。';if(dx==='dep')rb+=' うつ病では「寝たのに休めない」「朝が一番つらい」がよく見られます。';if(age==='senior')rb+=' 年齢とともに眠りは浅くなりやすく、休養感が下がることがあります。';addPoint('休養感','t-amber','体が休めた感じが少なめです','今夜：ぬるめのお湯で入浴→布団の中で「ゆっくり息を吐く」を試してみましょう',rb);actionCandidates.push('就寝1〜2時間前に、ぬるめのお湯で入浴してみましょう。');}
+  if(negM.filter(function(k){return(mornS[k]||0)>=2;}).length>=2||(mornS['rest']||0)<=1||(mornS['clear']||0)<=1){var rb='寝た時間よりも、回復した感じが少ないのがポイントです。';if(dx==='dep')rb+=' うつ病では「寝たのに休めない」「朝が一番つらい」がよく見られます。';if(age==='senior')rb+=' 年齢とともに眠りは浅くなりやすく、休養感が下がることがあります。';addPoint('休養感','t-amber','体が休めた感じが少なめです','今夜：寝る前に手浴・ホットタオル・ハンドマッサージなどで体を温めてから布団に入ってみましょう。布団の中では「ゆっくり息を吐く」を試してみましょう',rb);actionCandidates.push('寝る前に手浴やホットタオルで手元を温めてから布団に入ってみましょう。');}
   if(eff&&eff.eff<85){var et=eff.eff<70?'布団にいる時間と眠れた時間の差がかなり大きい状態です。':'布団にいる時間のうち、眠れていない時間が少しあります。';if(age==='senior')et+=' 高齢になると睡眠効率は下がりやすいですが、昼間の活動を増やすことで改善することがあります。';addPoint('眠りの効率','t-blue','布団にいた時間と眠れた時間に差があります','今夜：眠くなってから布団に入る。眠れなければいったん出てみましょう',et);actionCandidates.push('眠くなってから布団に入る、眠れないときは一度布団から出てみましょう。');}
   if(Anum.sjetlag>=2){var sjTxt='入院前、休日に長く寝ることで体内時計がずれていたかもしれません（社会的時差ぼけ）。';if(age==='teen')sjTxt+=' 思春期は特に体内時計がずれやすい時期です。';addPoint('体内時計（社会的時差ぼけ）','t-green','休日と平日の睡眠差が大きかったかもしれません','退院後：休日も平日と1時間以内の差で起きることを習慣にしましょう',sjTxt);}
   if(A.onset==='1時間以内'||A.onset==='1時間以上'){var ob='体が眠るモードに入りにくかったかもしれません。';if(dx==='anx'||dxS['dx_bedThink']==='y')ob+=' 布団に入ると考えごとが増える「こころのアクセル」が影響しています。';if(dx==='ptsd'||dxS['dx_bodyTense']==='y')ob+=' トラウマへの警戒が体を緊張状態にしていることもあります。';if(dx==='adhd'||dxS['dx_cantSwitch']==='y')ob+=' 発達特性による切り替えの難しさが影響していることがあります。';if(age==='teen')ob+=' 思春期は夜に目が冴えやすい時期で、これは発達段階の影響もあります。';addPoint('入眠スイッチ','t-amber','寝つきに時間がかかりました','今夜：4秒吸って6秒吐く。「今夜の答えは出さなくていい」と紙に書いてから布団へ',ob);actionCandidates.push('眠くなってからベッドに入ること、4秒吸って6秒吐く呼吸を試してみましょう。');}
@@ -565,10 +567,10 @@ function showResult(){
   if(dayItems.filter(function(i){return dayS[i.k]==='ng';}).length>=3||A.nap==='30分以上'||dayS['d_wake']==='ng'||dayS['d_light']==='ng'){var db2='眠りは夜だけで決まらず、朝の光や起きる時間が体内時計を整えます。';if(A.nap==='30分以上')db2+=' 昼に眠りを使うと夜の「眠りたさの貯金」がたまりにくくなります。';if(age==='senior')db2+=' 高齢になると体内時計が前にずれやすく、早朝覚醒が増えることがあります。';addPoint('体内時計','t-green','生活リズムが少しずれやすくなっています','明日：朝起きたらカーテンを開けて光を浴びましょう。「起きる時間をそろえる」ことがコツです',db2);actionCandidates.push('明朝、カーテンを開けて朝の光を少し浴びてみましょう。');}
   var mindH=['h_think','h_tmr','h_past','h_anger','h_lone','h_ins','h_self','h_halluc','h_dream'];
   var hasMind=mindH.some(function(k){return hinS[k];})||dxS['dx_bedThink']==='y'||dxS['dx_preAnx']==='y'||dxS['dx_memFlash']==='y';
-  if(hasMind){var mt='体は横になっていても、こころのアクセルが踏まれていると眠りに入りにくくなります。';if(dx==='ptsd'||dxS['dx_fearSleep']==='y')mt+=' トラウマがあると眠る時間にも体が警戒モードを続けることがあります。';if(dx==='anx'||dxS['dx_preAnx']==='y')mt+=' 「眠れなかったらどうしよう」という不安そのものがアクセルになっています。';if(dx==='sz'||dxS['dx_nightHalluc']==='y')mt+=' 夜に幻聴・気配・不安が強まりやすいことがあります。';var mtHint='今夜：考えごとは紙に書いて「明日考えること」に。不安が強いときは周りに見えるもの・聞こえる音を3つ確認してみましょう';if(dx==='ptsd')mtHint+='。「今いる場所は病棟で安全」と自分に伝えましょう';addPoint('こころのアクセル','t-coral','こころが眠りを妨げていたかもしれません',mtHint,mt);actionCandidates.push('眠れないときは「寝なきゃ」より「横になって休めればOK」と自分に言い聞かせましょう。');}
+  if(hasMind){var mt='体は横になっていても、こころのアクセルが踏まれていると眠りに入りにくくなります。';if(dx==='ptsd'||dxS['dx_fearSleep']==='y')mt+=' トラウマがあると眠る時間にも体が警戒モードを続けることがあります。';if(dx==='anx'||dxS['dx_preAnx']==='y')mt+=' 「眠れなかったらどうしよう」という不安そのものがアクセルになっています。';if(dx==='sz'||dxS['dx_nightHalluc']==='y')mt+=' 夜に幻聴・気配・不安が強まりやすいことがあります。';var mtHint='今夜：考えごとは紙に書いて「明日考えること」に。不安が強いときは周りに見えるもの・聞こえる音を3つ確認してみましょう。眠れないまま自室にいるのがつらいときは、ぷらねたルーム（環境調整室）でリラックスするのも一つの方法です';if(dx==='ptsd')mtHint+='。「今いる場所は病棟で安全」と自分に伝えましょう';addPoint('こころのアクセル','t-coral','こころが眠りを妨げていたかもしれません',mtHint,mt);actionCandidates.push('眠れないときは「寝なきゃ」より「横になって休めればOK」と自分に言い聞かせましょう。');}
   var bodyH=['h_pain','h_itch','h_rls','h_palp','h_toilet','h_stom','h_nose','h_temp','h_side','h_rest'];
-  if(bodyH.some(function(k){return hinS[k];})||dxS['dx_akath']==='y'||dxS['dx_rls']==='y'){var bTxt='体の不快感（痛み・そわそわ・トイレなど）が眠りを邪魔していました。';if(dx==='sz'||dxS['dx_akath']==='y')bTxt+=' 体のそわそわは薬の副作用（アカシジア様）の可能性もあります。';addPoint('からだのアクセル','t-purple','体の不快感が眠りを邪魔していました','今夜：気になる症状を確認して朝にスタッフへ。そわそわが強いときは今夜でも声をかけてください',bTxt);actionCandidates.push('体の気になる症状を、担当スタッフに具体的に伝えてみましょう。');}
-  if(['h_noise','h_nvl','h_hot','h_cold','h_bed','h_snore','h_round','h_safe','h_place'].some(function(k){return hinS[k];})){var eHint='今夜：耳栓・アイマスク・室温調整をスタッフに相談しましょう。眠れないのは本人の問題だけではありません';addPoint('環境の影響','t-purple','病棟環境が眠りに影響していました',eHint,'病棟は自宅と違って音・光・温度・人の気配があります。眠れないのは本人の努力不足ではなく、環境の影響もあります。');actionCandidates.push('耳栓やアイマスクの使用をスタッフに相談してみましょう。');}
+  if(bodyH.some(function(k){return hinS[k];})||dxS['dx_akath']==='y'||dxS['dx_rls']==='y'){var bTxt='体の不快感（痛み・そわそわ・トイレなど）が眠りを邪魔していました。';if(dx==='sz'||dxS['dx_akath']==='y')bTxt+=' 体のそわそわは薬の副作用（アカシジア様）の可能性もあります。';addPoint('からだのアクセル','t-purple','体の不快感が眠りを邪魔していました','今夜：気になる症状を確認して朝にスタッフへ。そわそわが強いときは今夜でも声をかけてください。体を落ち着かせたいときは、ぷらねたルーム（環境調整室）の利用もスタッフに相談してみましょう',bTxt);actionCandidates.push('体の気になる症状を、担当スタッフに具体的に伝えてみましょう。');}
+  if(['h_noise','h_nvl','h_hot','h_cold','h_bed','h_snore','h_round','h_safe','h_place'].some(function(k){return hinS[k];})){var eHint='今夜：耳栓・アイマスク・室温調整をスタッフに相談しましょう。自室の雰囲気が気になるときは、ぷらねたルーム（環境調整室）でリラックスする時間をとるのもおすすめです。眠れないのは本人の問題だけではありません';addPoint('環境の影響','t-purple','病棟環境が眠りに影響していました',eHint,'病棟は自宅と違って音・光・温度・人の気配があります。眠れないのは本人の努力不足ではなく、環境の影響もあります。');actionCandidates.push('耳栓やアイマスクの使用をスタッフに相談してみましょう。');}
   if(dx==='dep2'&&(dxS['dx_cravingSleep']==='y'||dxS['dx_cravingSleep']==='warn'||dxS['dx_usedForSleep']==='y'||dxS['dx_withdrawInsomnia']==='y')){var depTxt='アルコールや薬物は一時的に寝つきをよくするように見えても、眠りの後半を分断します。';if(dxS['dx_cravingSleep']==='warn'||dxS['dx_cravingSleep']==='y')depTxt+=' 眠れないことと使用欲求が結びついているサインかもしれません。';addPoint('依存症と眠り','t-coral','眠りと使用欲求がつながっているかもしれません','今夜：「眠れない＝すぐ使う」ではなく、まずスタッフに今の気持ちを話してみましょう',depTxt);actionCandidates.push('眠れない夜の使用欲求については、担当スタッフに状態を伝えましょう。');}
   var horKeys=Object.keys(horS).filter(function(k){return horS[k]&&k.indexOf('_consult')===-1&&k.indexOf('_skip')===-1;});
   if(horKeys.length>0){var ht='',hb='',horHint='';if(gender==='female'){ht='からだのリズムが眠りに影響しているかもしれません';hb='生理周期や更年期のホルモンの波が、眠気・不眠・気分の波として出ることがあります。';horHint='気になる症状を担当スタッフに伝えてみましょう';}else if(gender==='male'){ht='ホルモンや加齢の変化が眠りに関係しているかもしれません';hb='男性のホルモン変化は疲れやすさ・気力低下・睡眠の変化に影響することがあります。';horHint='気になる症状はスタッフに相談してよいサインです';}else{ht='からだのリズムが眠りに影響しているかもしれません';hb='ホルモンや体のリズムの変化は、眠りに影響することがあります。';horHint='気になる症状を担当スタッフに伝えてみましょう';}if(Object.keys(horS).some(function(k){return horS[k]&&k.indexOf('_consult')>-1;}))horHint+='（相談希望あり）';addPoint('からだのリズム','t-teal',ht,horHint,hb);actionCandidates.push('からだのリズムや体の変化について、担当スタッフに相談したいと伝えましょう。');}
@@ -586,6 +588,13 @@ function showResult(){
   var rows=[['布団に入った時刻',document.getElementById('t-bed').value||'—'],['起き上がった時刻',document.getElementById('t-rise').value||'—'],['寝つくまでの時間',A.onset||'—'],['夜中の覚醒回数',A.wakeup||'—'],['夜中の覚醒時間',A.waketime||'—'],['睡眠時間（自己申告）',A.dur||'—'],['推定睡眠時間',eff?fmtMin(eff.tst):'—'],['睡眠効率',eff?eff.eff+'%':'—'],['昼寝',A.nap||'—'],['睡眠薬・頓服',A.meds||'—'],['休日の多眠',A.sjetlag||'—']];
   document.getElementById('summary-table').innerHTML=rows.map(function(r){return'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>';}).join('');
   document.getElementById('result-sub').textContent=points.length>1?points.length+'つのポイントが見つかりました':'ポイントを確認しましょう';
+  var introFixed='この結果は、良い・悪いを決めるものではありません。どこで眠りが引っかかっているかを一緒に見るための地図です。記録をつけられたこと自体が、自分の眠りを観察できているということです。';
+  var autoSummary='';
+  var isGood=points.length===0||(points.length===1&&points[0].tag==='良好');
+  if(isGood){autoSummary='今夜は大きな引っかかりは見当たりませんでした。今の眠りのリズムをそのまま続けていきましょう。';}
+  else{var topPoint=points.find(function(p){return p.color==='t-amber'||p.color==='t-coral';})||points[0];var countStr=points.length===1?'1つ':points.length+'つ';autoSummary='今夜のチェックでは、'+countStr+'の引っかかりが見つかりました。中でも「'+topPoint.main+'」が一番のポイントかもしれません。';if(actionCandidates.length>0){autoSummary+='まず今夜は、'+actionCandidates[0];}}
+  var msgEl=document.getElementById('summary-message');
+  msgEl.innerHTML='<strong style="color:var(--color-text-primary);display:block;margin-bottom:6px">眠りの地図について</strong>'+introFixed+'<br><br><strong style="color:var(--color-text-primary)">今夜のまとめ：</strong>\u3000'+autoSummary;
   var notice='全部変える必要はありません。今夜は一つだけ試すとしたら、どれがよさそうですか？';
   if(dx==='dep')notice='うつ病と睡眠はお互いに影響し合います。眠りを整えることは、気分の回復を支える土台になります。';
   else if(dx==='bip')notice='双極症では「眠れない」だけでなく「眠らなくても平気な感じ」も大切なサインです。変化があれば早めに担当スタッフへ。';
