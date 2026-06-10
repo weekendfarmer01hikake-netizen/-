@@ -525,7 +525,7 @@ var hindrance=[
   {cat:'からだ',items:[
     {k:'h_pain',l:'痛みがあった'},{k:'h_itch',l:'かゆみ・むずむず感があった'},
     {k:'h_rls',l:'足がムズムズして落ち着かなかった'},{k:'h_palp',l:'動悸・息苦しさがあった'},
-    {k:'h_toilet',l:'トイレが近かった'},{k:'h_stom',l:'お腹の不調があった'},
+    {k:'h_toilet',l:'トイレが近かった'},{k:'h_stom',l:'お腹の不調があった'},{k:'h_hungry',l:'空腹で眠れなかった'},
     {k:'h_nose',l:'咳・鼻づまりがあった'},{k:'h_temp',l:'ほてり・寒気があった'},
     {k:'h_side',l:'薬の副作用っぽい不快感があった'},{k:'h_rest',l:'体がそわそわして横になっていられなかった'}
   ]},
@@ -670,37 +670,40 @@ function showResult(){
     tuna: 0         // 回遊マグロ（睡眠負債）
   };
 
-  // 寝つき困難スコア
-  if(A.onset==='30分以内') typeScores.jellyfish+=1;
+  // ① くらげ（寝つき困難）：1時間以上かかる場合を中核に
+  // 30分以内は加点しない（正常範囲）
   if(A.onset==='1時間以内') typeScores.jellyfish+=2;
   if(A.onset==='1時間以上') typeScores.jellyfish+=3;
+  // 補助：考えごと・スマホは「30分以内」でも不安や刺激がある時だけ加点
+  if(A.onset==='30分以内'&&(evenS['e_think']==='y'||dxS['dx_bedThink']==='y'||dxS['dx_preAnx']==='y')) typeScores.jellyfish+=1;
   if(evenS['e_think']==='y') typeScores.jellyfish+=1;
   if(evenS['e_screen']==='y') typeScores.jellyfish+=1;
   if(dxS['dx_bedThink']==='y') typeScores.jellyfish+=1;
   if(dxS['dx_preAnx']==='y') typeScores.jellyfish+=1;
 
-  // 中途覚醒スコア
-  if(A.wakeup==='1回') typeScores.otter+=1;
-  if(A.wakeup==='2回') typeScores.otter+=2;
+  // ② ラッコ（中途覚醒）：複数回＋戻りにくさがそろった時に出す
+  // 1回だけの覚醒は加点しない
+  if(A.wakeup==='2回') typeScores.otter+=1;
   if(A.wakeup==='3回以上') typeScores.otter+=3;
-  if(A.waketime==='15分以内') typeScores.otter+=1;
-  if(A.waketime==='30分以内') typeScores.otter+=2;
+  // 覚醒時間：30分以上から加点（短時間はスルー）
+  if(A.waketime==='30分以内') typeScores.otter+=1;
   if(A.waketime==='1時間以内') typeScores.otter+=2;
   if(A.waketime==='1時間以上') typeScores.otter+=3;
-  if(hinS['h_noise']||hinS['h_snore']||hinS['h_round']) typeScores.otter+=1;
+  // 補助（環境要因は影響因子に回すため加点しない）
   if(hinS['h_dream']||hinS['h_halluc']) typeScores.otter+=1;
   if(dxS['dx_withdrawInsomnia']==='y') typeScores.otter+=1;
 
-  // 早朝覚醒スコア
+  // ③ イルカ（早朝覚醒）：早朝覚醒＋眠れない＋休めないの組み合わせで判定
   if(dxS['dx_earlyWake']==='y') typeScores.dolphin+=3;
-  if(dxS['dx_earlyAct']==='y') typeScores.dolphin+=2;
-  if(dx==='dep') typeScores.dolphin+=1;
-  if(age==='senior') typeScores.dolphin+=1;
-  // 起床時刻が早い場合（t-rise が 4:00〜5:30）
+  // 起床時刻が早い場合は「睡眠時間が短い or 休養感が低い」条件付き加点
   var riseVal = document.getElementById('t-rise').value;
-  if(riseVal && ['3:00','3:30','4:00','4:30','5:00','5:30'].indexOf(riseVal)>-1) typeScores.dolphin+=2;
+  var earlyRise = riseVal && ['3:00','3:30','4:00','4:30','5:00','5:30'].indexOf(riseVal)>-1;
+  if(earlyRise && (A.dur==='3時間未満'||A.dur==='3〜5時間')) typeScores.dolphin+=2;
+  if(earlyRise && ((mornS['rest']||0)<=1)) typeScores.dolphin+=1;
+  // うつ病・高齢は早朝覚醒チェックがある時だけ加点
+  if(dxS['dx_earlyWake']==='y' && dx==='dep') typeScores.dolphin+=1;
 
-  // 休養感不足スコア
+  // ④ クジラ（休養感不足）：睡眠時間のわりに休めない
   if((mornS['rest']||0)<=1) typeScores.whale+=2;
   if((mornS['clear']||0)<=1) typeScores.whale+=1;
   if((mornS['fatigue']||0)>=2) typeScores.whale+=1;
@@ -708,13 +711,13 @@ function showResult(){
   if(drugS['dr_remain']==='2') typeScores.whale+=1;
   if(hinS['h_dream']) typeScores.whale+=1;
 
-  // 日中眠気スコア
+  // ⑤ アザラシ（日中眠気）：日中の眠気が主体
   if(drugS['dr_day']==='2') typeScores.seal+=2;
   if((mornS['sleepy']||0)>=2) typeScores.seal+=2;
   if(A.nap==='30分以上') typeScores.seal+=1;
   if(dayS['d_act']==='ng') typeScores.seal+=1;
 
-  // 昼夜リズムずれスコア
+  // ⑥ ホタルいか（昼夜リズムずれ）：夜に目が冴える・昼夜逆転
   if(dxS['dx_nightEye']==='y') typeScores.squid+=3;
   if(dxS['dx_lateRhythm']==='y') typeScores.squid+=2;
   if(dxS['dx_dayNightFlip']==='y') typeScores.squid+=2;
@@ -723,14 +726,14 @@ function showResult(){
   if(Anum.sjetlag>=2) typeScores.squid+=1;
   if(dx==='adhd') typeScores.squid+=1;
 
-  // ヤドカリスコア（寝床でがんばりすぎ）
+  // ⑦ ヤドカリ（寝床でがんばりすぎ）：eff2を使用（既計算）
   if(evenS['e_inbed']==='y') typeScores.hermit+=3;
-  if(eff&&eff.eff<70) typeScores.hermit+=2;
-  if(eff&&eff.eff>=70&&eff.eff<85) typeScores.hermit+=1;
+  if(eff2&&eff2.eff<70) typeScores.hermit+=2;
+  if(eff2&&eff2.eff>=70&&eff2.eff<85) typeScores.hermit+=1;
   if(hinS['h_ins']) typeScores.hermit+=2;
   if(dxS['dx_preAnx']==='y') typeScores.hermit+=1;
 
-  // 睡眠負債スコア
+  // ⑧ マグロ（睡眠負債）：睡眠時間の短さが主体
   if(A.dur==='3時間未満') typeScores.tuna+=3;
   if(A.dur==='3〜5時間') typeScores.tuna+=2;
   if(A.dur==='5〜6時間') typeScores.tuna+=1;
@@ -749,12 +752,16 @@ function showResult(){
     tuna:      {name:'泳ぎすぎマグロタイプ', emoji:'🐟', sub:'眠り不足がじわじわたまっている', desc:'泳ぎ続けて少しずつ疲れがたまる回遊マグロのように、眠れない日が続いて体と脳に眠り不足が積み重なっている状態です。'}
   };
 
-  var mainTypeKey = 'whale'; // デフォルト
+  // 同点時の優先順位（介入しやすい入口を優先）
+  var typePriority=['tuna','squid','hermit','jellyfish','otter','whale','seal','dolphin'];
   var maxScore = 0;
-  Object.keys(typeScores).forEach(function(k){
-    if(typeScores[k]>maxScore){maxScore=typeScores[k];mainTypeKey=k;}
-  });
-  // スコアが全部0（ほぼ問題なし）の場合はwhaleを外してgoodにする
+  Object.keys(typeScores).forEach(function(k){if(typeScores[k]>maxScore) maxScore=typeScores[k];});
+  // 同点時は優先順位で決定
+  var mainTypeKey = 'whale';
+  for(var pi=0;pi<typePriority.length;pi++){
+    if(typeScores[typePriority[pi]]===maxScore&&maxScore>0){mainTypeKey=typePriority[pi];break;}
+  }
+  // 全スコア0かチェック
   var allZero = Object.keys(typeScores).every(function(k){return typeScores[k]===0;});
 
   // 影響因子タイプ判定
@@ -817,11 +824,19 @@ function showResult(){
 
   // タイプカード描画
   var tjCard = document.getElementById('type-judgment-card');
-  if(allZero){
+  var trulyAllClear = allZero && factors.length===0 && signalLevel==='green';
+  var weakType = !allZero && maxScore < 2;
+  if(trulyAllClear){
     tjCard.style.display='block';
-    tjCard.innerHTML='<div class="type-judgment tj-good"><div class="tj-label">今日の眠りのタイプ</div><div class="tj-animal">🐢 ウミガメのびのび遊泳タイプ</div><div class="tj-animal-sub">今のところ大きな気になるポイントはなさそうです</div><p style="font-size:13px;opacity:.9;line-height:1.7">今の眠りのリズムをそのまま大切にしましょう。記録を続けることが、自分の眠りを観察する力になります。</p></div>';
+    tjCard.innerHTML='<div class="type-judgment tj-good"><div class="tj-label">今日の眠りのタイプ</div><span class="tj-emoji">🐢</span><div class="tj-animal">ウミガメのびのび遊泳タイプ</div><div class="tj-animal-sub">今のところ大きな気になるポイントはなさそうです</div><p style="font-size:13px;opacity:.9;line-height:1.7">今の眠りのリズムをそのまま大切にしましょう。記録を続けることが、自分の眠りを観察する力になります。</p>'+signalHTML+'</div>';
+  } else if(allZero){
+    tjCard.style.display='block';
+    var condNote=factors.length>0?'少し気になる海のコンディションがあります。':'今日はっきりしたタイプは出ていません。';
+    tjCard.innerHTML='<div class="type-judgment"><div class="tj-label">今日の眠りのタイプ</div><span class="tj-emoji">🌊</span><div class="tj-animal">今日はっきりしたタイプは出ていません</div><div class="tj-animal-sub">'+condNote+'</div>'+(factors.length>0?'<div class="tj-divider"></div><div class="tj-factor-label">影響していそうな海のコンディション</div><div class="tj-factors">'+factors.map(function(f){return'<span class="tj-factor">'+f.label+'（'+f.desc+'）</span>';}).join('')+'</div>':'')+signalHTML+'</div>';
   } else {
     var t = typeNames[mainTypeKey];
+    // スコアが弱い場合はサブタイトルを控えめに
+    if(weakType) t = Object.assign({},t,{sub:'少し'+t.sub+'傾向があります'});
     var factorHTML = factors.length>0
       ? '<div class="tj-factor-label">影響していそうな海のコンディション</div><div class="tj-factors">'+factors.map(function(f){return'<span class="tj-factor">'+f.label+'（'+f.desc+'）</span>';}).join('')+'</div>'
       : '';
